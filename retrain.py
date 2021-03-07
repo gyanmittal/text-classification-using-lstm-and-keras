@@ -41,8 +41,11 @@ print(model.summary())
 print("Traning Model...")
 epochs = 5
 batch_size = 32
-validation_split = 0.1
+validation_split = 0.2
 verbose = 1
+max_patience = 10
 
-model.fit(x, labels, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_split=validation_split, callbacks=[checkpoint, tensorboard_callback])
+print("Traning Model...")
+callbacks=[customCallBack(model, checkpoint_path, max_patience=max_patience), tensorboard_callback]
+model.fit(x, labels, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_split=validation_split, callbacks=callbacks)
 

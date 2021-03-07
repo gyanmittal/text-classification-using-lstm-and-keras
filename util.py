@@ -48,7 +48,7 @@ def pad_sentences(sentences, padding_word='<PAD/>', max_sequence_length=200, is_
     return padded_sentences
 
 
-def build_vocab(sentences, max_vocab_size=20000, min_word_freq=1, padding_word='<PAD/>', unknown_word='<UNK/>'):
+def build_vocab(sentences, max_vocab_size=20000, min_word_freq=2, padding_word='<PAD/>', unknown_word='<UNK/>'):
     word_counts = Counter(itertools.chain(*sentences)) # Count words
     vocabulay_inv = [[unknown_word, math.inf], [padding_word,math.inf]] + [[x[0], x[1]] for x in word_counts.most_common()] # Sort the word as frequency order
     if(len(vocabulay_inv) > (max_vocab_size+2)):
@@ -95,3 +95,39 @@ def precision_recall_f1_score(y_true, y_pred):
     if (precision > 0 or recall > 0):
         f1_score = 2 * precision * recall / (precision + recall)
     return precision, recall, f1_score
+
+import keras
+import sys
+
+class customCallBack(keras.callbacks.Callback):
+        def __init__(self, model, checkpoint_path, max_patience=10000):
+            self.logs=[]
+            self.model = model
+            self.checkpoint_path = checkpoint_path
+            self.best_accuracy = sys.float_info.min
+            self.best_val_accuracy = sys.float_info.min
+            self.no_improve_epoch_count = 0
+            self.max_patience = max_patience
+
+        def on_epoch_end(self, epoch, logs={}):
+            accuracy = logs['accuracy']
+            val_accuracy = logs['val_accuracy']
+	
+            if (val_accuracy > self.best_val_accuracy):
+                print("Saving as validation accuracy increased from ", self.best_val_accuracy, " to ", val_accuracy)
+                self.best_val_accuracy = val_accuracy
+                self.best_accuracy = accuracy
+                self.model.save(self.checkpoint_path)
+                self.no_improve_epoch_count = 0
+            elif val_accuracy == self.best_val_accuracy and accuracy > self.best_accuracy:
+                print("Saving as accuracy increased from ", self.best_accuracy, " to ", accuracy, " without any compromise with validation accuracy")
+                self.best_accuracy = accuracy
+                self.model.save(self.checkpoint_path)
+                self.no_improve_epoch_count = 0
+            else:
+                self.no_improve_epoch_count += 1
+                print("No improvement for the last ", self.no_improve_epoch_count, " epochs")
+                if self.no_improve_epoch_count >= self.max_patience:
+                    print("Stopping the training")
+                    #self.model.save(checkpoint_dir+ "/cp-last-epoch.ckpt")
+                    self.model.stop_training = True

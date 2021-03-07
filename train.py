@@ -1,9 +1,9 @@
 import numpy as np
 import os
-from util import load_data_and_labels_from_csv_file, build_vocab, pad_sentences, text_to_sequence, save_vocab_json, generate_word_level_features
+from util import load_data_and_labels_from_csv_file, build_vocab, pad_sentences, text_to_sequence, save_vocab_json, generate_word_level_features, customCallBack
 import keras
 from keras.layers import Embedding, Dropout, LSTM, Dense
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, LambdaCallback
 from keras.optimizers import Adam
 from keras.models import Sequential
 import requests # This library is used to make requests to internet
@@ -32,7 +32,7 @@ if not os.path.exists(data_file):
 print("Loading data...")
 labels, sentences = load_data_and_labels_from_csv_file(data_file)
 
-params = {'max_words_features': 500} 
+params = {'max_words_features': 50} 
 
 lines_words_level_features = generate_word_level_features(sentences, params['max_words_features'])
 params['max_words_features'] = max([len(lines) for lines in lines_words_level_features])
@@ -68,7 +68,7 @@ vocab_size_or_total_features = len(vocabulary)
 # this returns a tensor
 print("Creating Model...")
 
-embed_dim = 300
+embed_dim = 128
 embedding_dropout_factor = 0.4
 recurrent_dropout_factor = 0.2
 LSTM_dropout_factor = 0.2
@@ -103,10 +103,13 @@ model.compile(optimizer=adam, loss='binary_crossentropy', metrics=['accuracy'])
 
 print(model.summary())
 
-epochs = 20
+epochs = 50
 batch_size = 32
 verbose = 1
 validation_split = 0.2
+max_patience = 20
+
 print("Traning Model...")
-model.fit(x, labels, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_split=validation_split, callbacks=[checkpoint, tensorboard_callback])
+callbacks=[customCallBack(model, checkpoint_path, max_patience=max_patience), tensorboard_callback]
+model.fit(x, labels, batch_size=batch_size, epochs=epochs, verbose=verbose, validation_split=validation_split, callbacks=callbacks)
 

@@ -36,7 +36,7 @@ for sentence in sentences:
 if(count_ham_as_spam == 0): 
     print("None\n")
 
-print("Spam classified as Ham:")
+print("\nSpam classified as Ham:")
 count = 0
 count_spam_classified_as_ham = 0
 for sentence in sentences:
@@ -48,7 +48,7 @@ if(count_spam_classified_as_ham == 0):
     print("None\n")
 
 precision, recall, f1_score = precision_recall_f1_score(labels, predictions)
-print("precision:\t", precision)
+print("\nprecision:\t", precision)
 print("recall:\t", recall)
 print("f1_score:\t", f1_score)
 
